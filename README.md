@@ -1,6 +1,6 @@
 <div align="center">
 
-# op-desktop-x-ai
+# OP DesktopX
 
 **Autonomous AI agent that controls a macOS desktop.**  
 Perceives the screen, plans multi-step tasks, executes actions, and learns from experience.
@@ -71,22 +71,22 @@ cp .env.example .env
 
 ```bash
 # Run a single task
-desktop-agent run "Research cheap laptops on Amazon and save a summary to Notes"
+op-desktopx run "Research cheap laptops on Amazon and save a summary to Notes"
 
 # Override max steps for long tasks
-desktop-agent run "Compile and run my Python project" --max-steps 80
+op-desktopx run "Compile and run my Python project" --max-steps 80
 
 # Interactive mode — enter tasks one after another
-desktop-agent interactive
+op-desktopx interactive
 
 # Debug mode — prints full LLM reasoning per step
-desktop-agent --debug run "Open Finder and screenshot the Desktop folder"
+op-desktopx --debug run "Open Finder and screenshot the Desktop folder"
 
 # List recorded skills with reliability scores
-desktop-agent skills
+op-desktopx skills
 
 # Print current configuration
-desktop-agent config
+op-desktopx config
 ```
 
 ---

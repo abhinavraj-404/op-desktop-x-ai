@@ -58,7 +58,7 @@ dev = [
 ]
 
 [project.scripts]
-desktop-agent = "desktop_agent.__main__:main"
+op-desktopx = "desktop_agent.__main__:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
