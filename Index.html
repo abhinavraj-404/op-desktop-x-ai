@@ -428,14 +428,12 @@
             <div class="comment"># run a single task</div>
             <div class="mt-3"><span class="cmd">desktop-agent interactive</span></div>
             <div class="comment"># interactive REPL mode</div>
-            <div class="mt-3"><span class="cmd">desktop-agent teach &lt;skill-name&gt; -d <span class="str">"&lt;desc&gt;"</span></span></div>
-            <div class="comment"># record a new skill</div>
             <div class="mt-3"><span class="cmd">desktop-agent skills</span></div>
-            <div class="comment"># list saved skills</div>
+            <div class="comment"># list recorded skills with reliability scores</div>
+            <div class="mt-3"><span class="cmd">desktop-agent config</span></div>
+            <div class="comment"># print the current configuration</div>
             <div class="mt-3"><span class="cmd">desktop-agent --debug run <span class="str">"&lt;task&gt;"</span></span></div>
             <div class="comment"># verbose debug output</div>
-            <div class="mt-3"><span class="cmd">desktop-agent-gui</span></div>
-            <div class="comment"># launch GUI interface</div>
           </div>
 
           <div class="mt-6 arch-badge">
@@ -443,7 +441,6 @@
             <div class="mt-2 flex flex-wrap gap-2 text-[11px]">
               <span class="tag">Python 3.11+</span>
               <span class="tag">OpenAI</span>
-              <span class="tag">Playwright</span>
               <span class="tag">ChromaDB</span>
               <span class="tag">PyObjC</span>
               <span class="tag">Pydantic v2</span>
@@ -757,7 +754,7 @@
       <div data-reveal>
         <p class="font-mono text-[11px] text-[#444] uppercase tracking-widest mb-3">Log Schema</p>
         <h2 class="text-[32px] font-semibold tracking-tight mb-4">Every step is structured.</h2>
-        <p class="text-muted text-[15px] max-w-lg mb-16">Tasks are logged as JSONL — one event per line. Machine-readable, auditable, and queryable by the self-optimizer.</p>
+        <p class="text-muted text-[15px] max-w-lg mb-16">Tasks are logged as JSONL — one event per line. Machine-readable, auditable, and replayable.</p>
       </div>
 
       <div class="grid md:grid-cols-2 gap-6" data-reveal>
@@ -808,7 +805,7 @@
             </div>
             <div class="arch-badge">
               <div class="flex items-baseline gap-3"><span class="label font-mono">thought</span><span class="text-[11px] text-[#555]">string</span></div>
-              <div class="text-[11px] mt-1">Full LLM reasoning chain verbatim. Queryable by self-optimizer for failure analysis.</div>
+              <div class="text-[11px] mt-1">Full LLM reasoning chain verbatim — audit trail of every decision.</div>
             </div>
           </div>
         </div>
