@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Desktop Agent — Autonomous AI for macOS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['-apple-system', 'BlinkMacSystemFont', 'SF Pro Display', 'Segoe UI', 'sans-serif'],
+            mono: ['SF Mono', 'JetBrains Mono', 'Fira Code', 'monospace'],
+          },
+          colors: {
+            surface: '#0a0a0a',
+            panel: '#111111',
+            border: '#1f1f1f',
+            muted: '#888888',
+            accent: '#f5f5f7',
+          },
+          animation: {
+            'fade-up': 'fadeUp 0.6s ease forwards',
+            'blink': 'blink 1.2s step-end infinite',
+            'pulse-slow': 'pulse 3s ease-in-out infinite',
+          },
+          keyframes: {
+            fadeUp: {
+              '0%': { opacity: 0, transform: 'translateY(20px)' },
+              '100%': { opacity: 1, transform: 'translateY(0)' },
+            },
+            blink: {
+              '0%, 100%': { opacity: 1 },
+              '50%': { opacity: 0 },
+            },
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    * { -webkit-font-smoothing: antialiased; }
+
+    body { background: #0a0a0a; color: #f5f5f7; }
+
+    .gradient-text {
+      background: linear-gradient(135deg, #f5f5f7 0%, #888888 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .grid-bg {
+      background-image:
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 48px 48px;
+    }
+
+    .glow {
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 0 80px rgba(255,255,255,0.03);
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 10px;
+      border: 1px solid #2a2a2a;
+      border-radius: 999px;
+      font-size: 11px;
+      font-family: 'SF Mono', monospace;
+      color: #888;
+      letter-spacing: 0.04em;
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #3dd68c;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .terminal-line::before {
+      content: '$ ';
+      color: #3dd68c;
+      font-family: 'SF Mono', monospace;
+    }
+
+    .feature-card {
+      background: #111111;
+      border: 1px solid #1f1f1f;
+      border-radius: 16px;
+      padding: 28px;
+      transition: border-color 0.2s ease, transform 0.2s ease;
+    }
+
+    .feature-card:hover {
+      border-color: #333333;
+      transform: translateY(-2px);
+    }
+
+    .arch-badge {
+      background: #161616;
+      border: 1px solid #2a2a2a;
+      border-radius: 10px;
+      padding: 14px 18px;
+      font-family: 'SF Mono', monospace;
+      font-size: 12px;
+      color: #888;
+      transition: border-color 0.2s;
+    }
+
+    .arch-badge:hover {
+      border-color: #444;
+      color: #ccc;
+    }
+
+    .arch-badge .label {
+      color: #f5f5f7;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+
+    .step-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 1px solid #2a2a2a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'SF Mono', monospace;
+      font-size: 11px;
+      color: #555;
+      flex-shrink: 0;
+    }
+
+    .code-block {
+      background: #0d0d0d;
+      border: 1px solid #1f1f1f;
+      border-radius: 12px;
+      padding: 20px 24px;
+      font-family: 'SF Mono', monospace;
+      font-size: 12.5px;
+      line-height: 1.8;
+      color: #888;
+      overflow-x: auto;
+    }
+
+    .code-block .cmd { color: #f5f5f7; }
+    .code-block .comment { color: #444; }
+    .code-block .str { color: #3dd68c; }
+
+    .nav-blur {
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      background: rgba(10,10,10,0.8);
+    }
+
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #1f1f1f 30%, #1f1f1f 70%, transparent);
+    }
+
+    @keyframes fadeUp {
+      0%   { opacity: 0; transform: translateY(20px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
+    [data-reveal] {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    [data-reveal].visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Glitch effect */
+    .glitch {
+      position: relative;
+      display: inline-block;
+    }
+    .glitch::before,
+    .glitch::after {
+      content: attr(data-text);
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      overflow: hidden;
+      clip-path: inset(0 0 100% 0);
+    }
+    .glitch::before {
+      color: #ff2d55;
+      animation: glitch-top 3.5s infinite linear;
+      text-shadow: -1px 0 #ff2d55;
+    }
+    .glitch::after {
+      color: #0aefff;
+      animation: glitch-bottom 3.5s infinite linear;
+      text-shadow: 1px 0 #0aefff;
+    }
+    @keyframes glitch-top {
+      0%   { clip-path: inset(0 0 96% 0); transform: translate(-2px, 0); }
+      10%  { clip-path: inset(8% 0 78% 0); transform: translate(2px, 0); }
+      20%  { clip-path: inset(40% 0 43% 0); transform: translate(-1px, 0); }
+      30%  { clip-path: inset(0 0 96% 0); transform: translate(0, 0); }
+      45%  { clip-path: inset(55% 0 18% 0); transform: translate(2px, 0); }
+      55%  { clip-path: inset(0 0 96% 0); transform: translate(-2px, 0); }
+      70%  { clip-path: inset(15% 0 70% 0); transform: translate(1px, 0); }
+      80%  { clip-path: inset(0 0 96% 0); transform: translate(0, 0); }
+      90%  { clip-path: inset(72% 0 5% 0); transform: translate(-2px, 0); }
+      100% { clip-path: inset(0 0 96% 0); transform: translate(0, 0); }
+    }
+    @keyframes glitch-bottom {
+      0%   { clip-path: inset(86% 0 0 0); transform: translate(2px, 0); }
+      15%  { clip-path: inset(60% 0 26% 0); transform: translate(-2px, 0); }
+      25%  { clip-path: inset(86% 0 0 0); transform: translate(1px, 0); }
+      40%  { clip-path: inset(22% 0 63% 0); transform: translate(-1px, 0); }
+      50%  { clip-path: inset(86% 0 0 0); transform: translate(2px, 0); }
+      65%  { clip-path: inset(78% 0 8% 0); transform: translate(-2px, 0); }
+      75%  { clip-path: inset(86% 0 0 0); transform: translate(0, 0); }
+      88%  { clip-path: inset(48% 0 38% 0); transform: translate(2px, 0); }
+      100% { clip-path: inset(86% 0 0 0); transform: translate(0, 0); }
+    }
+
+    /* Laptop SVG screen scanline */
+    .scanlines {
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(0,0,0,0.08) 0px,
+        rgba(0,0,0,0.08) 1px,
+        transparent 1px,
+        transparent 3px
+      );
+    }
+
+    .laptop-glow {
+      filter: drop-shadow(0 0 32px rgba(61,214,140,0.12)) drop-shadow(0 0 8px rgba(61,214,140,0.06));
+    }
+  </style>
+</head>
+<body class="min-h-screen">
+
+  <!-- Nav -->
+  <nav class="fixed top-0 left-0 right-0 z-50 nav-blur border-b border-[#1a1a1a]">
+    <div class="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
+      <span class="font-mono text-[13px] text-white tracking-tight">desktop-agent</span>
+      <div class="flex items-center gap-6">
+        <a href="#architecture" class="text-[13px] text-muted hover:text-white transition-colors">Architecture</a>
+        <a href="#features" class="text-[13px] text-muted hover:text-white transition-colors">Features</a>
+        <a href="#intelligence" class="text-[13px] text-muted hover:text-white transition-colors">Intelligence</a>
+        <a href="#perception" class="text-[13px] text-muted hover:text-white transition-colors">Perception</a>
+        <a href="#trace" class="text-[13px] text-muted hover:text-white transition-colors">Trace</a>
+        <a href="#schema" class="text-[13px] text-muted hover:text-white transition-colors">Schema</a>
+        <a href="#quickstart" class="text-[13px] text-muted hover:text-white transition-colors">Quickstart</a>
+        <a href="https://github.com" class="text-[12px] font-mono px-3 py-1.5 border border-[#2a2a2a] rounded-lg text-muted hover:text-white hover:border-[#444] transition-all">GitHub ↗</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="grid-bg min-h-screen flex flex-col items-center justify-center text-center px-6 relative overflow-hidden pt-14">
+    <!-- Subtle radial glow -->
+    <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+      <div class="w-[600px] h-[600px] rounded-full" style="background: radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 70%);"></div>
+    </div>
+
+    <div class="relative z-10 max-w-3xl mx-auto">
+      <div class="tag mb-8" style="opacity:0;animation:fadeUp 0.5s ease 0.1s forwards">
+        <span class="dot"></span>
+        v1.0.0 · macOS · Python 3.11+
+      </div>
+
+      <h1 class="text-[52px] leading-[1.08] font-semibold tracking-tight mb-6 gradient-text" style="opacity:0;animation:fadeUp 0.6s ease 0.2s forwards">
+        Autonomous AI<br/>Desktop Agent.
+      </h1>
+
+      <p class="text-[17px] leading-relaxed text-muted max-w-xl mx-auto mb-10" style="opacity:0;animation:fadeUp 0.6s ease 0.35s forwards">
+        Perceives your screen. Plans intelligently. Executes precisely.<br/>
+        Learns from every task — entirely on macOS.
+      </p>
+
+      <div class="flex items-center justify-center gap-4" style="opacity:0;animation:fadeUp 0.6s ease 0.5s forwards">
+        <a href="#quickstart" class="px-5 py-2.5 bg-white text-black text-[13px] font-medium rounded-lg hover:bg-[#e0e0e0] transition-colors">
+          Get Started
+        </a>
+        <a href="#architecture" class="px-5 py-2.5 border border-[#2a2a2a] text-[13px] text-muted rounded-lg hover:border-[#444] hover:text-white transition-all">
+          Architecture →
+        </a>
+      </div>
+
+      <!-- Laptop + glitch caption -->
+      <div class="mt-14" style="opacity:0;animation:fadeUp 0.6s ease 0.65s forwards">
+
+        <!-- Laptop SVG -->
+        <div class="laptop-glow inline-block">
+          <svg viewBox="0 0 520 320" width="520" xmlns="http://www.w3.org/2000/svg" class="max-w-full">
+            <!-- base / hinge -->
+            <rect x="60" y="284" width="400" height="12" rx="6" fill="#161616" stroke="#2a2a2a" stroke-width="1"/>
+            <!-- lid outer -->
+            <rect x="80" y="24" width="360" height="260" rx="12" fill="#111" stroke="#2a2a2a" stroke-width="1.5"/>
+            <!-- screen bezel -->
+            <rect x="92" y="36" width="336" height="236" rx="8" fill="#0a0a0a"/>
+            <!-- screen content bg -->
+            <rect x="94" y="38" width="332" height="232" rx="7" fill="#0d0d0d"/>
+            <!-- scanline overlay -->
+            <rect x="94" y="38" width="332" height="232" rx="7" fill="url(#scanline)" opacity="0.4"/>
+            <!-- ambient glow on screen -->
+            <rect x="94" y="38" width="332" height="232" rx="7" fill="url(#screenGlow)" opacity="0.6"/>
+
+            <!-- Terminal output on screen -->
+            <text x="110" y="68" font-family="SF Mono, monospace" font-size="9" fill="#3dd68c">$ desktop-agent run "take control of the desktop"</text>
+            <text x="110" y="84" font-family="SF Mono, monospace" font-size="9" fill="#555">→ Planner: decomposing task...</text>
+            <text x="110" y="99" font-family="SF Mono, monospace" font-size="9" fill="#555">→ Executor: capturing screen [1920×1080]</text>
+            <text x="110" y="114" font-family="SF Mono, monospace" font-size="9" fill="#555">→ Perception: accessibility tree loaded (312 nodes)</text>
+            <text x="110" y="129" font-family="SF Mono, monospace" font-size="9" fill="#555">→ Action: click(892, 541) — "Search" button</text>
+            <text x="110" y="144" font-family="SF Mono, monospace" font-size="9" fill="#555">→ Verifier: ✓ state changed</text>
+            <text x="110" y="159" font-family="SF Mono, monospace" font-size="9" fill="#3dd68c">→ Executor: typing query...</text>
+            <text x="110" y="174" font-family="SF Mono, monospace" font-size="9" fill="#555">→ Memory: storing strategy (vec: 0.94 sim)</text>
+            <text x="110" y="189" font-family="SF Mono, monospace" font-size="9" fill="#555">→ Action: scroll(0, -400)</text>
+            <text x="110" y="204" font-family="SF Mono, monospace" font-size="9" fill="#555">→ Verifier: ✓ results visible</text>
+            <text x="110" y="219" font-family="SF Mono, monospace" font-size="9" fill="#3dd68c">→ Task complete in 4.2s · 7 actions</text>
+
+            <!-- blinking cursor -->
+            <rect x="110" y="228" width="6" height="10" rx="1" fill="#3dd68c" opacity="1">
+              <animate attributeName="opacity" values="1;0;1" dur="1.1s" repeatCount="indefinite"/>
+            </rect>
+
+            <!-- camera dot -->
+            <circle cx="260" cy="30" r="2.5" fill="#1f1f1f" stroke="#2a2a2a" stroke-width="0.5"/>
+
+            <defs>
+              <pattern id="scanline" x="0" y="0" width="1" height="3" patternUnits="userSpaceOnUse">
+                <rect x="0" y="0" width="1" height="1" fill="rgba(0,0,0,0.2)"/>
+              </pattern>
+              <radialGradient id="screenGlow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="rgba(61,214,140,0.04)"/>
+                <stop offset="100%" stop-color="transparent"/>
+              </radialGradient>
+            </defs>
+          </svg>
+        </div>
+
+        <!-- Glitch caption -->
+        <div class="mt-6 flex items-center justify-center gap-3">
+          <div class="h-px w-12 bg-[#2a2a2a]"></div>
+          <p
+            class="glitch font-mono text-[13px] tracking-widest uppercase"
+            style="color:#b0b0b0"
+            data-text="it's already controlling it"
+            id="glitch-text"
+          >it's already controlling it</p>
+          <div class="h-px w-12 bg-[#2a2a2a]"></div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- Quickstart -->
+  <section id="quickstart" class="py-28 px-6">
+    <div class="max-w-5xl mx-auto">
+      <div data-reveal>
+        <p class="font-mono text-[11px] text-[#444] uppercase tracking-widest mb-3">Quickstart</p>
+        <h2 class="text-[32px] font-semibold tracking-tight mb-14">Up in minutes.</h2>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-10">
+
+        <div class="space-y-8" data-reveal>
+          <!-- Step 1 -->
+          <div class="flex gap-4">
+            <div class="step-num">01</div>
+            <div>
+              <p class="text-[14px] font-medium mb-2">Install</p>
+              <div class="code-block">
+                <div><span class="cmd">pip install -e ".[dev]"</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 2 -->
+          <div class="flex gap-4">
+            <div class="step-num">02</div>
+            <div>
+              <p class="text-[14px] font-medium mb-2">Configure</p>
+              <div class="code-block">
+                <div><span class="cmd">cp .env.example .env</span></div>
+                <div class="text-[#444]"># set PLANNER_API_KEY and EXECUTOR_API_KEY</div>
+                <div class="text-[#444]"># models &amp; endpoints are in config/default.toml</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 3 -->
+          <div class="flex gap-4">
+            <div class="step-num">03</div>
+            <div>
+              <p class="text-[14px] font-medium mb-2">Grant macOS permissions</p>
+              <p class="text-muted text-[13px] leading-relaxed">System Settings &rarr; Privacy &amp; Security &rarr; <span class="text-white">Accessibility</span> and <span class="text-white">Screen Recording</span> &rarr; enable your terminal or IDE.</p>
+            </div>
+          </div>
+
+          <!-- Step 4 -->
+          <div class="flex gap-4">
+            <div class="step-num">04</div>
+            <div>
+              <p class="text-[14px] font-medium mb-2">Run your first task</p>
+              <div class="code-block">
+                <div><span class="cmd">desktop-agent run <span class="str">"Open Safari and search for Python"</span></span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CLI reference -->
+        <div data-reveal style="transition-delay:0.1s">
+          <p class="text-[13px] text-muted mb-4 font-mono">CLI reference</p>
+          <div class="code-block space-y-2 text-[12px]">
+            <div><span class="cmd">desktop-agent run <span class="str">"&lt;task&gt;"</span></span></div>
+            <div class="comment"># run a single task</div>
+            <div class="mt-3"><span class="cmd">desktop-agent interactive</span></div>
+            <div class="comment"># interactive REPL mode</div>
+            <div class="mt-3"><span class="cmd">desktop-agent teach &lt;skill-name&gt; -d <span class="str">"&lt;desc&gt;"</span></span></div>
+            <div class="comment"># record a new skill</div>
+            <div class="mt-3"><span class="cmd">desktop-agent skills</span></div>
+            <div class="comment"># list saved skills</div>
+            <div class="mt-3"><span class="cmd">desktop-agent --debug run <span class="str">"&lt;task&gt;"</span></span></div>
+            <div class="comment"># verbose debug output</div>
+            <div class="mt-3"><span class="cmd">desktop-agent-gui</span></div>
+            <div class="comment"># launch GUI interface</div>
+          </div>
+
+          <div class="mt-6 arch-badge">
+            <div class="label">Stack</div>
+            <div class="mt-2 flex flex-wrap gap-2 text-[11px]">
+              <span class="tag">Python 3.11+</span>
+              <span class="tag">OpenAI</span>
+              <span class="tag">Playwright</span>
+              <span class="tag">ChromaDB</span>
+              <span class="tag">PyObjC</span>
+              <span class="tag">Pydantic v2</span>
+              <span class="tag">Rich &middot; Click</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- Architecture -->
+  <section id="architecture" class="py-28 px-6">
+    <div class="max-w-5xl mx-auto">
+      <div data-reveal>
+        <p class="font-mono text-[11px] text-[#444] uppercase tracking-widest mb-3">Architecture</p>
+        <h2 class="text-[32px] font-semibold tracking-tight mb-4">Dual-model pipeline.</h2>
+        <p class="text-muted text-[15px] max-w-lg mb-14">
+          A large thinking model plans and decomposes. A fast vision model acts — one screenshot, one action, per step.
+        </p>
+      </div>
+
+      <!-- Pipeline diagram -->
+      <div data-reveal class="flex flex-col md:flex-row items-stretch gap-4 mb-14">
+        <div class="flex-1 arch-badge">
+          <div class="label">Planner</div>
+          <div>Large reasoning model</div>
+          <div class="mt-2 text-[11px] text-[#555]">Task decomposition · Replanning · Escalation</div>
+        </div>
+        <div class="flex items-center justify-center text-[#333] text-xl font-mono">→</div>
+        <div class="flex-1 arch-badge">
+          <div class="label">Executor</div>
+          <div>Fast vision model</div>
+          <div class="mt-2 text-[11px] text-[#555]">Screenshot → Action · 25+ typed actions</div>
+        </div>
+        <div class="flex items-center justify-center text-[#333] text-xl font-mono">→</div>
+        <div class="flex-1 arch-badge">
+          <div class="label">Verifier</div>
+          <div>Action + retry manager</div>
+          <div class="mt-2 text-[11px] text-[#555]">Stuck detection · Cyclic pattern guard</div>
+        </div>
+      </div>
+
+      <!-- Module grid -->
+      <div data-reveal class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div class="arch-badge"><div class="label">core/</div>Agent · Planner · Executor · Actions</div>
+        <div class="arch-badge"><div class="label">perception/</div>Screenshots · Accessibility Tree · OCR · Diff</div>
+        <div class="arch-badge"><div class="label">control/</div>Mouse · Keyboard · App Manager · Desktop</div>
+        <div class="arch-badge"><div class="label">browser/</div>Playwright · DOM extraction · Research</div>
+        <div class="arch-badge"><div class="label">memory/</div>Working · ChromaDB · Skill Library</div>
+        <div class="arch-badge"><div class="label">learning/</div>Self-optimization · Failure analysis</div>
+        <div class="arch-badge"><div class="label">scheduling/</div>Cron-style task scheduler</div>
+        <div class="arch-badge"><div class="label">knowledge/</div>macOS apps · Shortcuts · Recovery</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- Intelligence deep-dive -->
+  <section id="intelligence" class="py-28 px-6">
+    <div class="max-w-5xl mx-auto">
+      <div data-reveal>
+        <p class="font-mono text-[11px] text-[#444] uppercase tracking-widest mb-3">Intelligence</p>
+        <h2 class="text-[32px] font-semibold tracking-tight mb-4">It knows when it's lost.<br/>And it recovers.</h2>
+        <p class="text-muted text-[15px] max-w-lg mb-16">Two systems work in tandem — one detects failure in real time, the other learns from it over time.</p>
+      </div>
+
+      <!-- Stuck Detection -->
+      <div class="grid md:grid-cols-2 gap-6 mb-6">
+        <div class="feature-card md:col-span-2" data-reveal style="padding:40px">
+          <div class="flex items-start gap-8 flex-col md:flex-row">
+            <div class="flex-1">
+              <div class="flex items-center gap-3 mb-5">
+                <div class="w-8 h-8 rounded-lg border border-[#2a2a2a] flex items-center justify-center">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f5f5f7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                </div>
+                <span class="font-mono text-[11px] text-[#555] uppercase tracking-widest">stuck detection</span>
+              </div>
+              <h3 class="text-[22px] font-semibold tracking-tight mb-3">Cyclic pattern guard.</h3>
+              <p class="text-muted text-[14px] leading-relaxed mb-4">After every action, the executor compares the new screen state against a rolling window of prior states. If the pixel diff falls below threshold for N consecutive steps — the agent is looping.</p>
+              <p class="text-muted text-[14px] leading-relaxed">Rather than retrying blindly, it escalates to the Planner with a diagnostic snapshot: <span class="text-white font-mono text-[13px]">stuck_at_step=7, repeated_action=click(892,541), diff=0.002</span>. The Planner replans from scratch with full context.</p>
+            </div>
+            <div class="flex-shrink-0 w-full md:w-64">
+              <div class="code-block text-[11.5px] space-y-1.5">
+                <div class="text-[#444] mb-2">// stuck_detector.py</div>
+                <div><span style="color:#f5f5f7">if</span> <span style="color:#888">consecutive_no_change</span> <span style="color:#f5f5f7">&gt;= threshold:</span></div>
+                <div class="pl-4"><span style="color:#888">raise</span> <span style="color:#f5f5f7">StuckException(</span></div>
+                <div class="pl-8"><span style="color:#888">step=</span><span style="color:#f5f5f7">self.step,</span></div>
+                <div class="pl-8"><span style="color:#888">last_action=</span><span style="color:#f5f5f7">action,</span></div>
+                <div class="pl-8"><span style="color:#888">diff=</span><span style="color:#f5f5f7">pixel_diff</span></div>
+                <div class="pl-4"><span style="color:#f5f5f7">)</span></div>
+                <div class="mt-2 pt-2 border-t border-[#1f1f1f] text-[#444]">&rarr; escalate to Planner</div>
+                <div class="text-[#444]">&rarr; replan with diagnostic</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Learning from Mistakes -->
+      <div class="grid md:grid-cols-2 gap-6">
+        <div class="feature-card md:col-span-2" data-reveal style="padding:40px">
+          <div class="flex items-start gap-8 flex-col md:flex-row">
+            <div class="flex-1">
+              <div class="flex items-center gap-3 mb-5">
+                <div class="w-8 h-8 rounded-lg border border-[#2a2a2a] flex items-center justify-center">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f5f5f7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                </div>
+                <span class="font-mono text-[11px] text-[#555] uppercase tracking-widest">learning from mistakes</span>
+              </div>
+              <h3 class="text-[22px] font-semibold tracking-tight mb-3">Every failure is a lesson.</h3>
+              <p class="text-muted text-[14px] leading-relaxed mb-4">Task outcomes — success, failure, partial — are structured and stored in ChromaDB with vector embeddings. Each log captures the action sequence, error context, and final state diff.</p>
+              <p class="text-muted text-[14px] leading-relaxed">The self-optimizer periodically queries these logs, surfaces recurring failure clusters, and proposes revised strategies. Over time, the agent builds a long-term memory of <em class="text-white not-italic">what doesn't work</em> — and stops repeating it.</p>
+            </div>
+            <div class="flex-shrink-0 w-full md:w-64">
+              <div class="border border-[#1f1f1f] rounded-xl p-4 space-y-3 text-[11.5px] font-mono">
+                <div class="flex items-center gap-2"><div class="w-1.5 h-1.5 rounded-full bg-white flex-shrink-0"></div><span class="text-[#888]">task executes</span></div>
+                <div class="ml-[6px] h-4 w-px bg-[#2a2a2a]"></div>
+                <div class="flex items-center gap-2"><div class="w-1.5 h-1.5 rounded-full bg-white flex-shrink-0"></div><span class="text-[#888]">outcome logged + embedded</span></div>
+                <div class="ml-[6px] h-4 w-px bg-[#2a2a2a]"></div>
+                <div class="flex items-center gap-2"><div class="w-1.5 h-1.5 rounded-full bg-white flex-shrink-0"></div><span class="text-[#888]">optimizer clusters failures</span></div>
+                <div class="ml-[6px] h-4 w-px bg-[#2a2a2a]"></div>
+                <div class="flex items-center gap-2"><div class="w-1.5 h-1.5 rounded-full bg-white flex-shrink-0"></div><span class="text-[#888]">strategy updated</span></div>
+                <div class="ml-[6px] h-4 w-px bg-[#2a2a2a]"></div>
+                <div class="flex items-center gap-2"><div class="w-1.5 h-1.5 rounded-full bg-white flex-shrink-0"></div><span class="text-white">next task succeeds</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- Features -->
+  <section id="features" class="py-28 px-6">
+    <div class="max-w-5xl mx-auto">
+      <div data-reveal>
+        <p class="font-mono text-[11px] text-[#444] uppercase tracking-widest mb-3">Capabilities</p>
+        <h2 class="text-[32px] font-semibold tracking-tight mb-14">Built for production.</h2>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-4">
+
+        <div class="feature-card" data-reveal>
+          <div class="mb-4">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f5f5f7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+          </div>
+          <h3 class="text-[15px] font-medium mb-2">Multi-signal perception</h3>
+          <p class="text-muted text-[13px] leading-relaxed">Combines screenshots, macOS accessibility tree, OCR text extraction, and pixel-level screen diffing for full situational awareness.</p>
+        </div>
+
+        <div class="feature-card" data-reveal style="transition-delay:0.05s">
+          <div class="mb-4">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f5f5f7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/></svg>
+          </div>
+          <h3 class="text-[15px] font-medium mb-2">Typed action schema</h3>
+          <p class="text-muted text-[13px] leading-relaxed">20 Pydantic-validated action types — click, type, scroll, drag, hotkey, open_app, spotlight_search, wait, replan — all schema-enforced before execution.</p>
+        </div>
+
+        <div class="feature-card" data-reveal style="transition-delay:0.1s">
+          <div class="mb-4">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f5f5f7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <h3 class="text-[15px] font-medium mb-2">Task scheduling</h3>
+          <p class="text-muted text-[13px] leading-relaxed">Custom asyncio scheduler supports one-shot and recurring tasks with priority queues — daily reports, automated research, recurring workflows.</p>
+        </div>
+
+        <div class="feature-card" data-reveal style="transition-delay:0.0s">
+          <div class="mb-4">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f5f5f7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          </div>
+          <h3 class="text-[15px] font-medium mb-2">Skill library</h3>
+          <p class="text-muted text-[13px] leading-relaxed">Record, replay, and rate reusable action sequences. Teach once, reuse forever. Skills are keyword-searched and ranked by reliability score.</p>
+        </div>
+
+        <div class="feature-card" data-reveal style="transition-delay:0.05s">
+          <div class="mb-4">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f5f5f7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+          </div>
+          <h3 class="text-[15px] font-medium mb-2">Vector memory</h3>
+          <p class="text-muted text-[13px] leading-relaxed">ChromaDB-backed semantic search over three collections: learned strategies, completed task outcomes, and general knowledge — injected into every LLM prompt.</p>
+        </div>
+
+        <div class="feature-card" data-reveal style="transition-delay:0.1s">
+          <div class="mb-4">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f5f5f7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          </div>
+          <h3 class="text-[15px] font-medium mb-2">Browser automation</h3>
+          <p class="text-muted text-[13px] leading-relaxed">Playwright integration with DOM extraction, not just screenshots. Research tasks run reliably against real web pages.</p>
+        </div>
+
+        <div class="feature-card" data-reveal style="transition-delay:0.0s">
+          <div class="mb-4">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f5f5f7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          </div>
+          <h3 class="text-[15px] font-medium mb-2">macOS-native</h3>
+          <p class="text-muted text-[13px] leading-relaxed">Deep integration via PyObjC: ApplicationServices, Quartz, and Cocoa frameworks for native accessibility and screen capture.</p>
+        </div>
+
+        <div class="feature-card" data-reveal style="transition-delay:0.05s">
+          <div class="mb-4">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f5f5f7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          </div>
+          <h3 class="text-[15px] font-medium mb-2">Self-optimization</h3>
+          <p class="text-muted text-[13px] leading-relaxed">Analyses skill reliability and failure patterns from memory to surface prompt adjustment suggestions — implemented in <span class="font-mono text-white text-[11px]">learning/self_optimize.py</span>.</p>
+        </div>
+
+        <div class="feature-card" data-reveal style="transition-delay:0.1s">
+          <div class="mb-4">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f5f5f7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </div>
+          <h3 class="text-[15px] font-medium mb-2">Schema-enforced safety</h3>
+          <p class="text-muted text-[13px] leading-relaxed">Every action is Pydantic-validated before execution. No raw shell commands, no arbitrary code — typed, bounded, auditable.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- Perception Pipeline -->
+  <section id="perception" class="py-28 px-6">
+    <div class="max-w-5xl mx-auto">
+      <div data-reveal>
+        <p class="font-mono text-[11px] text-[#444] uppercase tracking-widest mb-3">Perception</p>
+        <h2 class="text-[32px] font-semibold tracking-tight mb-4">Four signals. One picture.</h2>
+        <p class="text-muted text-[15px] max-w-lg mb-16">Most agents see only screenshots. This one fuses four independent data streams before deciding what to do.</p>
+      </div>
+
+      <div class="grid md:grid-cols-4 gap-3 mb-10" data-reveal>
+        <div class="arch-badge flex flex-col gap-2">
+          <div class="label flex items-center gap-2">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f5f5f7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            Screenshot
+          </div>
+          <div class="text-[11px] text-[#555] leading-relaxed">Full 1920×1080 RGBA capture via Quartz. Compressed and passed to the vision model at each step.</div>
+          <div class="mt-auto font-mono text-[10px] text-[#333]">~180ms</div>
+        </div>
+        <div class="arch-badge flex flex-col gap-2">
+          <div class="label flex items-center gap-2">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f5f5f7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+            Accessibility Tree
+          </div>
+          <div class="text-[11px] text-[#555] leading-relaxed">AXUIElement hierarchy via ApplicationServices. Extracts roles, labels, bounds, and enabled state for every visible node.</div>
+          <div class="mt-auto font-mono text-[10px] text-[#333]">312 nodes avg</div>
+        </div>
+        <div class="arch-badge flex flex-col gap-2">
+          <div class="label flex items-center gap-2">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f5f5f7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            OCR
+          </div>
+          <div class="text-[11px] text-[#555] leading-relaxed">EasyOCR on regions where the accessibility tree returns empty labels. Catches canvas text, custom-rendered UI, and PDFs.</div>
+          <div class="mt-auto font-mono text-[10px] text-[#333]">fallback layer</div>
+        </div>
+        <div class="arch-badge flex flex-col gap-2">
+          <div class="label flex items-center gap-2">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f5f5f7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            Screen Diff
+          </div>
+          <div class="text-[11px] text-[#555] leading-relaxed">Pixel-level structural similarity (SSIM) between consecutive frames. change_ratio drives stuck detection threshold.</div>
+          <div class="mt-auto font-mono text-[10px] text-[#333]">SSIM · numpy</div>
+        </div>
+      </div>
+
+      <div class="code-block text-[12px]" data-reveal>
+        <div class="text-[#444] mb-4">// perception/capture.py — fused signal per step</div>
+        <div><span style="color:#888">perception</span> <span style="color:#f5f5f7">= {</span></div>
+        <div class="pl-6"><span style="color:#888">"screenshot"</span><span style="color:#f5f5f7">:  </span><span style="color:#888">capture_screen</span><span style="color:#f5f5f7">(),         </span><span style="color:#444">  # Quartz CGWindowListCreateImage</span></div>
+        <div class="pl-6"><span style="color:#888">"ax_tree"</span><span style="color:#f5f5f7">:     </span><span style="color:#888">get_ax_tree</span><span style="color:#f5f5f7">(app),        </span><span style="color:#444">  # AXUIElement hierarchy</span></div>
+        <div class="pl-6"><span style="color:#888">"ocr_text"</span><span style="color:#f5f5f7">:    </span><span style="color:#888">ocr_if_needed</span><span style="color:#f5f5f7">(screenshot), </span><span style="color:#444">  # EasyOCR fallback</span></div>
+        <div class="pl-6"><span style="color:#888">"diff_ratio"</span><span style="color:#f5f5f7">:  </span><span style="color:#888">ssim_diff</span><span style="color:#f5f5f7">(prev, screenshot),</span><span style="color:#444"> # change_ratio → stuck guard</span></div>
+        <div><span style="color:#f5f5f7">}</span></div>
+        <div class="mt-4 pt-4 border-t border-[#1f1f1f] text-[#444]">→ passed verbatim to executor LLM context window</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- Action Execution Trace -->
+  <section id="trace" class="py-28 px-6">
+    <div class="max-w-5xl mx-auto">
+      <div data-reveal>
+        <p class="font-mono text-[11px] text-[#444] uppercase tracking-widest mb-3">Execution Trace</p>
+        <h2 class="text-[32px] font-semibold tracking-tight mb-4">A real task. Step by step.</h2>
+        <p class="text-muted text-[15px] max-w-lg mb-16">Live replay from <span class="font-mono text-white text-[13px]">20260420_132249</span> — &ldquo;Research cheap electronics on Amazon and save to Notes.&rdquo;</p>
+      </div>
+
+      <div class="space-y-3" data-reveal>
+        <div class="flex gap-4 items-start p-4 border border-[#1a1a1a] rounded-xl bg-[#0d0d0d] hover:border-[#2a2a2a] transition-colors">
+          <div class="step-num flex-shrink-0">01</div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-3 mb-1 flex-wrap">
+              <span class="font-mono text-[12px] text-white">open_app</span>
+              <span class="tag">Safari</span>
+              <span class="ml-auto font-mono text-[10px] text-[#444]">8,455ms total</span>
+            </div>
+            <p class="text-[12px] text-muted">llm_decision 5,085ms &middot; perception 653ms &middot; execution 2,717ms</p>
+          </div>
+          <span class="font-mono text-[10px] px-2 py-1 rounded border border-[#2a2a2a] text-white flex-shrink-0">✓ verified</span>
+        </div>
+
+        <div class="flex gap-4 items-start p-4 border border-[#1a1a1a] rounded-xl bg-[#0d0d0d] hover:border-[#2a2a2a] transition-colors">
+          <div class="step-num flex-shrink-0">02</div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-3 mb-1 flex-wrap">
+              <span class="font-mono text-[12px] text-white">smart_type</span>
+              <span class="tag">&ldquo;Amazon electronics best value 2024&rdquo;</span>
+              <span class="ml-auto font-mono text-[10px] text-[#444]">6,848ms total</span>
+            </div>
+            <p class="text-[12px] text-muted">paste OK &middot; 34 chars &middot; press_enter=true &middot; screen_changed=true</p>
+          </div>
+          <span class="font-mono text-[10px] px-2 py-1 rounded border border-[#2a2a2a] text-white flex-shrink-0">✓ verified</span>
+        </div>
+
+        <div class="flex gap-4 items-start p-4 border border-[#1a1a1a] rounded-xl bg-[#0d0d0d] hover:border-[#2a2a2a] transition-colors">
+          <div class="step-num flex-shrink-0">03</div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-3 mb-1 flex-wrap">
+              <span class="font-mono text-[12px] text-white">click</span>
+              <span class="tag">x=587 y=531</span>
+              <span class="tag">&ldquo;Latest Electronic Gadgets 2024&rdquo; &mdash; Amazon.in</span>
+              <span class="ml-auto font-mono text-[10px] text-[#444]">15,772ms total</span>
+            </div>
+            <p class="text-[12px] text-muted">llm_decision 13,615ms (deep reasoning) &middot; execution 1,539ms &middot; screen_changed=true</p>
+          </div>
+          <span class="font-mono text-[10px] px-2 py-1 rounded border border-[#2a2a2a] text-white flex-shrink-0">✓ verified</span>
+        </div>
+
+        <div class="flex gap-4 items-start p-4 border border-[#1a1a1a] rounded-xl bg-[#0d0d0d] hover:border-[#2a2a2a] transition-colors">
+          <div class="step-num flex-shrink-0">04</div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-3 mb-1 flex-wrap">
+              <span class="font-mono text-[12px] text-white">wait</span>
+              <span class="tag">2,000ms</span>
+              <span class="ml-auto font-mono text-[10px] text-[#444]">9,982ms total</span>
+            </div>
+            <p class="text-[12px] text-muted">Page rendering 853 results &mdash; agent inferred load delay &middot; verification skipped (reliable action)</p>
+          </div>
+          <span class="font-mono text-[10px] px-2 py-1 rounded border border-[#2a2a2a] text-[#555] flex-shrink-0">skipped</span>
+        </div>
+
+        <div class="flex items-center gap-3 px-4 py-3 text-[11px] font-mono text-[#444]">
+          <div class="h-px flex-1 bg-[#1a1a1a]"></div>
+          task_id: 20260420_132249 &middot; 8 steps planned &middot; elapsed: 112.5s &middot; outcome: success
+          <div class="h-px flex-1 bg-[#1a1a1a]"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- Task Log Schema -->
+  <section id="schema" class="py-28 px-6">
+    <div class="max-w-5xl mx-auto">
+      <div data-reveal>
+        <p class="font-mono text-[11px] text-[#444] uppercase tracking-widest mb-3">Log Schema</p>
+        <h2 class="text-[32px] font-semibold tracking-tight mb-4">Every step is structured.</h2>
+        <p class="text-muted text-[15px] max-w-lg mb-16">Tasks are logged as JSONL — one event per line. Machine-readable, auditable, and queryable by the self-optimizer.</p>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6" data-reveal>
+        <div>
+          <p class="font-mono text-[11px] text-[#444] uppercase tracking-widest mb-4">Raw event — step_executed</p>
+          <div class="code-block text-[11px] leading-relaxed">
+<span style="color:#f5f5f7">{</span><br>
+&nbsp;&nbsp;<span style="color:#888">"event"</span><span style="color:#f5f5f7">:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><span style="color:#ccc">"step_executed"</span><span style="color:#f5f5f7">,</span><br>
+&nbsp;&nbsp;<span style="color:#888">"timestamp"</span><span style="color:#f5f5f7">:&nbsp; </span><span style="color:#ccc">"2026-04-20T13:23:30Z"</span><span style="color:#f5f5f7">,</span><br>
+&nbsp;&nbsp;<span style="color:#888">"elapsed_s"</span><span style="color:#f5f5f7">:&nbsp; </span><span style="color:#ccc">41.079</span><span style="color:#f5f5f7">,</span><br>
+&nbsp;&nbsp;<span style="color:#888">"step"</span><span style="color:#f5f5f7">:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><span style="color:#ccc">1</span><span style="color:#f5f5f7">,</span><br>
+&nbsp;&nbsp;<span style="color:#888">"action"</span><span style="color:#f5f5f7">:&nbsp;&nbsp;&nbsp;&nbsp; </span><span style="color:#ccc">"open_app"</span><span style="color:#f5f5f7">,</span><br>
+&nbsp;&nbsp;<span style="color:#888">"params"</span><span style="color:#f5f5f7">:&nbsp;&nbsp;&nbsp;&nbsp; { </span><span style="color:#888">"app_name"</span><span style="color:#f5f5f7">: </span><span style="color:#ccc">"Safari"</span><span style="color:#f5f5f7"> },</span><br>
+&nbsp;&nbsp;<span style="color:#888">"timing"</span><span style="color:#f5f5f7">:&nbsp;&nbsp;&nbsp;&nbsp; {</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#888">"llm_decision_ms"</span><span style="color:#f5f5f7">: </span><span style="color:#ccc">5085</span><span style="color:#f5f5f7">,</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#888">"perception_ms"</span><span style="color:#f5f5f7">:&nbsp;&nbsp; </span><span style="color:#ccc">653</span><span style="color:#f5f5f7">,</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#888">"execution_ms"</span><span style="color:#f5f5f7">:&nbsp;&nbsp; </span><span style="color:#ccc">2717</span><span style="color:#f5f5f7">,</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#888">"total_step_ms"</span><span style="color:#f5f5f7">: </span><span style="color:#ccc">8455</span><br>
+&nbsp;&nbsp;<span style="color:#f5f5f7">},</span><br>
+&nbsp;&nbsp;<span style="color:#888">"verification"</span><span style="color:#f5f5f7">: {</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#888">"verified"</span><span style="color:#f5f5f7">:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><span style="color:#ccc">true</span><span style="color:#f5f5f7">,</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#888">"screen_changed"</span><span style="color:#f5f5f7">: </span><span style="color:#ccc">true</span><span style="color:#f5f5f7">,</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#888">"change_ratio"</span><span style="color:#f5f5f7">:&nbsp;&nbsp; </span><span style="color:#ccc">null</span><br>
+&nbsp;&nbsp;<span style="color:#f5f5f7">},</span><br>
+&nbsp;&nbsp;<span style="color:#888">"stuck_warning"</span><span style="color:#f5f5f7">: </span><span style="color:#ccc">null</span><br>
+<span style="color:#f5f5f7">}</span>
+          </div>
+        </div>
+
+        <div>
+          <p class="font-mono text-[11px] text-[#444] uppercase tracking-widest mb-4">Field reference</p>
+          <div class="space-y-2">
+            <div class="arch-badge">
+              <div class="flex items-baseline gap-3"><span class="label font-mono">event</span><span class="text-[11px] text-[#555]">string</span></div>
+              <div class="text-[11px] mt-1">task_started &middot; plan_created &middot; step_executed &middot; task_completed &middot; task_failed</div>
+            </div>
+            <div class="arch-badge">
+              <div class="flex items-baseline gap-3"><span class="label font-mono">timing</span><span class="text-[11px] text-[#555]">object</span></div>
+              <div class="text-[11px] mt-1">llm_decision_ms, perception_ms, execution_ms broken out per step for profiling</div>
+            </div>
+            <div class="arch-badge">
+              <div class="flex items-baseline gap-3"><span class="label font-mono">verification</span><span class="text-[11px] text-[#555]">object</span></div>
+              <div class="text-[11px] mt-1">verified bool + screen_changed + change_ratio (SSIM). Drives stuck detection.</div>
+            </div>
+            <div class="arch-badge">
+              <div class="flex items-baseline gap-3"><span class="label font-mono">stuck_warning</span><span class="text-[11px] text-[#555]">null | object</span></div>
+              <div class="text-[11px] mt-1">Populated when consecutive no-change exceeds threshold. Triggers Planner escalation.</div>
+            </div>
+            <div class="arch-badge">
+              <div class="flex items-baseline gap-3"><span class="label font-mono">thought</span><span class="text-[11px] text-[#555]">string</span></div>
+              <div class="text-[11px] mt-1">Full LLM reasoning chain verbatim. Queryable by self-optimizer for failure analysis.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- Footer -->
+  <footer class="py-12 px-6">
+    <div class="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <span class="font-mono text-[13px] text-white">desktop-agent</span>
+        <span class="text-[#333]">·</span>
+        <span class="text-[12px] text-[#444]">MIT License</span>
+      </div>
+      <div class="flex items-center gap-6">
+        <span class="text-[12px] text-[#444]">Built by <span class="text-muted">Abhinav Raj</span></span>
+        <a href="https://github.com" class="text-[12px] text-[#444] hover:text-muted transition-colors font-mono">GitHub ↗</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Intersection observer for scroll reveals
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('[data-reveal]').forEach(el => observer.observe(el));
+
+    // Smooth active nav highlight
+    const sections = document.querySelectorAll('section[id]');
+    const navLinks = document.querySelectorAll('nav a[href^="#"]');
+
+    const sectionObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          navLinks.forEach(link => {
+            link.classList.toggle(
+              'text-white',
+              link.getAttribute('href') === '#' + entry.target.id
+            );
+            link.classList.toggle(
+              'text-muted',
+              link.getAttribute('href') !== '#' + entry.target.id
+            );
+          });
+        }
+      });
+    }, { rootMargin: '-40% 0px -40% 0px' });
+
+    sections.forEach(s => sectionObserver.observe(s));
+  </script>
+</body>
+</html>

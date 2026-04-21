@@ -1,0 +1,60 @@
+# Desktop Agent — default configuration
+# Set PLANNER_API_KEY and EXECUTOR_API_KEY in .env.
+# Edit this file to change models, endpoints, or any other setting.
+
+[llm]
+# ── Planner (large reasoning model) ──────────────────────────────
+planner_model    = "deepseek/deepseek-v3.2"
+planner_base_url = "https://api.novita.ai/openai"
+planner_max_tokens  = 1024
+planner_temperature = 0.3
+
+# ── Executor (fast vision model) ─────────────────────────────────
+executor_model    = "qwen/qwen3-vl-235b-a22b-instruct"
+executor_base_url = "https://api.novita.ai/openai"
+executor_max_tokens  = 512
+executor_temperature = 0.1
+
+# ── Shared ───────────────────────────────────────────────────────
+api_timeout          = 45
+escalation_threshold = 3
+
+[screen]
+screenshot_quality = 20          # JPEG quality — 85 for accurate UI element detection
+screenshot_format = "jpeg"       # JPEG for much smaller payloads (~10x smaller than PNG)
+max_width = 1920
+max_height = 1080
+
+[agent]
+max_steps = 50
+parallel_actions = false         # future: allow concurrent non-conflicting actions
+
+[memory]
+vector_db_path = "data/vector_db"
+embedding_model = "all-MiniLM-L6-v2"
+max_short_term_actions = 50
+max_long_term_strategies = 500
+skill_library_path = "data/skills"
+
+[accessibility]
+enabled = true
+fallback_to_vision = true        # if AX tree unavailable, fall back to VLM
+
+[ocr]
+enabled = false                  # disabled — accessibility tree is better; re-enable if AX unavailable
+engine = "easyocr"               # easyocr | tesseract
+languages = ["en"]
+
+[scheduling]
+enabled = false
+timezone = "UTC"
+
+[logging]
+level = "INFO"
+format = "console"               # console | json
+file = "data/logs/agent.log"
+
+[tts]
+enabled = true
+voice = "Daniel"                 # British English — Jarvis vibes
+rate = 210                       # words per minute

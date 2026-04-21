@@ -1,0 +1,84 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "desktop-agent"
+version = "1.0.0"
+description = "Autonomous AI desktop agent with accessibility-tree perception, browser automation, vector memory, and self-improving skill library."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.11"
+authors = [{ name = "Abhinav Raj" }]
+
+dependencies = [
+    # LLM
+    "openai>=1.30.0",
+
+    # Desktop control
+    "pyautogui>=0.9.54",
+    "Pillow>=10.0.0",
+
+    # macOS accessibility
+    "pyobjc-framework-ApplicationServices>=10.0",
+    "pyobjc-framework-Quartz>=10.0",
+    "pyobjc-framework-Cocoa>=10.0",
+
+    # Memory / vector DB
+    "chromadb>=0.5.0",
+    "sentence-transformers>=3.0.0",
+
+    # OCR
+    "easyocr>=1.7.0",
+
+    # Screen diffing
+    "numpy>=1.26.0",
+    "scikit-image>=0.22.0",
+
+    # Configuration
+    "pydantic>=2.7.0",
+    "pydantic-settings>=2.3.0",
+    "tomli>=2.0.0; python_version < '3.11'",
+
+    # CLI / UI
+    "rich>=13.0.0",
+    "click>=8.1.0",
+    "python-dotenv>=1.0.0",
+
+    # Logging
+    "structlog>=24.1.0",
+
+    # Scheduling
+    "apscheduler>=3.10.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "ruff>=0.4.0",
+    "mypy>=1.10.0",
+]
+
+[project.scripts]
+desktop-agent = "desktop_agent.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP", "B", "SIM", "TCH"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

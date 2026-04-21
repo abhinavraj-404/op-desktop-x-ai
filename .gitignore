@@ -1,0 +1,56 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+data/logs/
+*.log
+
+# Screenshots
+screenshots/
+
+# Vector DB
+data/vector_db/
+
+# Skills (user-recorded, not for VCS)
+data/skills/
+
+# macOS
+.DS_Store
+.AppleDouble
+._*
+.Spotlight-V100
+.Trashes
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Type checking / linting
+.mypy_cache/
+.ruff_cache/
+
+# Pytest
+.pytest_cache/
+htmlcov/
+.coverage
+coverage.xml
