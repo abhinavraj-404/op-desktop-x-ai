@@ -480,12 +480,12 @@
         <div class="flex-1 arch-badge">
           <div class="label">Executor</div>
           <div>Fast vision model</div>
-          <div class="mt-2 text-[11px] text-[#555]">Screenshot → Action · 25+ typed actions</div>
+          <div class="mt-2 text-[11px] text-[#555]">Screenshot → Action · 19 typed actions</div>
         </div>
         <div class="flex items-center justify-center text-[#333] text-xl font-mono">→</div>
         <div class="flex-1 arch-badge">
           <div class="label">Verifier</div>
-          <div>Action + retry manager</div>
+          <div>Inline screen-diff</div>
           <div class="mt-2 text-[11px] text-[#555]">Stuck detection · Cyclic pattern guard</div>
         </div>
       </div>
@@ -495,11 +495,9 @@
         <div class="arch-badge"><div class="label">core/</div>Agent · Planner · Executor · Actions</div>
         <div class="arch-badge"><div class="label">perception/</div>Screenshots · Accessibility Tree · OCR · Diff</div>
         <div class="arch-badge"><div class="label">control/</div>Mouse · Keyboard · App Manager · Desktop</div>
-        <div class="arch-badge"><div class="label">browser/</div><span class="text-[#333]">removed</span></div>
         <div class="arch-badge"><div class="label">memory/</div>Working · ChromaDB · Skill Library</div>
-        <div class="arch-badge"><div class="label">learning/</div>Self-optimization · Failure analysis</div>
-        <div class="arch-badge"><div class="label">scheduling/</div>Cron-style task scheduler</div>
         <div class="arch-badge"><div class="label">knowledge/</div>macOS apps · Shortcuts · Recovery</div>
+        <div class="arch-badge"><div class="label">ui/</div>CLI (Click + Rich)</div>
       </div>
     </div>
   </section>
@@ -547,38 +545,6 @@
         </div>
       </div>
 
-      <!-- Learning from Mistakes -->
-      <div class="grid md:grid-cols-2 gap-6">
-        <div class="feature-card md:col-span-2" data-reveal style="padding:40px">
-          <div class="flex items-start gap-8 flex-col md:flex-row">
-            <div class="flex-1">
-              <div class="flex items-center gap-3 mb-5">
-                <div class="w-8 h-8 rounded-lg border border-[#2a2a2a] flex items-center justify-center">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f5f5f7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-                </div>
-                <span class="font-mono text-[11px] text-[#555] uppercase tracking-widest">learning from mistakes</span>
-              </div>
-              <h3 class="text-[22px] font-semibold tracking-tight mb-3">Every failure is a lesson.</h3>
-              <p class="text-muted text-[14px] leading-relaxed mb-4">Task outcomes — success, failure, partial — are structured and stored in ChromaDB with vector embeddings. Each log captures the action sequence, error context, and final state diff.</p>
-              <p class="text-muted text-[14px] leading-relaxed">The self-optimizer periodically queries these logs, surfaces recurring failure clusters, and proposes revised strategies. Over time, the agent builds a long-term memory of <em class="text-white not-italic">what doesn't work</em> — and stops repeating it.</p>
-            </div>
-            <div class="flex-shrink-0 w-full md:w-64">
-              <div class="border border-[#1f1f1f] rounded-xl p-4 space-y-3 text-[11.5px] font-mono">
-                <div class="flex items-center gap-2"><div class="w-1.5 h-1.5 rounded-full bg-white flex-shrink-0"></div><span class="text-[#888]">task executes</span></div>
-                <div class="ml-[6px] h-4 w-px bg-[#2a2a2a]"></div>
-                <div class="flex items-center gap-2"><div class="w-1.5 h-1.5 rounded-full bg-white flex-shrink-0"></div><span class="text-[#888]">outcome logged + embedded</span></div>
-                <div class="ml-[6px] h-4 w-px bg-[#2a2a2a]"></div>
-                <div class="flex items-center gap-2"><div class="w-1.5 h-1.5 rounded-full bg-white flex-shrink-0"></div><span class="text-[#888]">optimizer clusters failures</span></div>
-                <div class="ml-[6px] h-4 w-px bg-[#2a2a2a]"></div>
-                <div class="flex items-center gap-2"><div class="w-1.5 h-1.5 rounded-full bg-white flex-shrink-0"></div><span class="text-[#888]">strategy updated</span></div>
-                <div class="ml-[6px] h-4 w-px bg-[#2a2a2a]"></div>
-                <div class="flex items-center gap-2"><div class="w-1.5 h-1.5 rounded-full bg-white flex-shrink-0"></div><span class="text-white">next task succeeds</span></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
     </div>
   </section>
 
@@ -607,15 +573,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f5f5f7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/></svg>
           </div>
           <h3 class="text-[15px] font-medium mb-2">Typed action schema</h3>
-          <p class="text-muted text-[13px] leading-relaxed">20 Pydantic-validated action types — click, type, scroll, drag, hotkey, open_app, spotlight_search, wait, replan — all schema-enforced before execution.</p>
-        </div>
-
-        <div class="feature-card" data-reveal style="transition-delay:0.1s">
-          <div class="mb-4">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f5f5f7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          </div>
-          <h3 class="text-[15px] font-medium mb-2">Task scheduling</h3>
-          <p class="text-muted text-[13px] leading-relaxed">Custom asyncio scheduler supports one-shot and recurring tasks with priority queues — daily reports, automated research, recurring workflows.</p>
+          <p class="text-muted text-[13px] leading-relaxed">19 Pydantic-validated action types — click, type, scroll, drag, hotkey, open_app, spotlight_search, wait, replan — all schema-enforced before execution.</p>
         </div>
 
         <div class="feature-card" data-reveal style="transition-delay:0.0s">
@@ -644,14 +602,6 @@
           </div>
           <h3 class="text-[15px] font-medium mb-2">macOS-native</h3>
           <p class="text-muted text-[13px] leading-relaxed">Deep integration via PyObjC: ApplicationServices, Quartz, and Cocoa frameworks for native accessibility and screen capture.</p>
-        </div>
-
-        <div class="feature-card" data-reveal style="transition-delay:0.05s">
-          <div class="mb-4">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f5f5f7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-          </div>
-          <h3 class="text-[15px] font-medium mb-2">Self-optimization</h3>
-          <p class="text-muted text-[13px] leading-relaxed">Analyses skill reliability and failure patterns from memory to surface prompt adjustment suggestions — implemented in <span class="font-mono text-white text-[11px]">learning/self_optimize.py</span>.</p>
         </div>
 
         <div class="feature-card" data-reveal style="transition-delay:0.1s">

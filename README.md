@@ -30,15 +30,11 @@ Perception fuses four signals in parallel before each LLM call: a screenshot, th
 
 ```
 src/desktop_agent/
-├── core/          # Agent orchestrator, Planner, Executor, action schema (20 typed actions)
+├── core/          # Agent orchestrator, Planner, Executor, action schema (19 typed actions)
 ├── perception/    # ScreenCapture (pyautogui), AccessibilityTree (pyobjc), OCREngine (EasyOCR), ScreenDiff (numpy)
 ├── control/       # Mouse, Keyboard, AppManager, DesktopController
-├── browser/       # removed
 ├── memory/        # ShortTermMemory (per-task), LongTermMemory (ChromaDB), SkillLibrary
 ├── knowledge/     # macOS app database — bundle IDs, launch commands, UI tips
-├── learning/      # SelfOptimizer (failure pattern analysis)
-├── scheduling/    # Asyncio-based one-shot and recurring task scheduler
-├── verification/  # ActionVerifier, RetryManager
 └── ui/            # CLI (Click + Rich)
 ```
 
@@ -127,12 +123,11 @@ Any OpenAI-compatible endpoint works.
 | Capability | Implementation |
 |---|---|
 | Multi-signal perception | Screenshot + AX tree + OCR + pixel diff fused per step |
-| Typed action schema | 20 Pydantic-validated actions — click, type, scroll, drag, hotkey, open\_app, and more |
+| Typed action schema | 19 Pydantic-validated actions — click, type, scroll, drag, hotkey, open\_app, and more |
 | Stuck detection | Consecutive screen-unchanged steps trigger Planner escalation |
 | Skill library | Record → replay → rate sequences; keyword-searched by reliability score |
 | Vector memory | ChromaDB — three collections: strategies, task outcomes, knowledge |
 | macOS-native | PyObjC (ApplicationServices, Quartz, Cocoa) for AX tree and screen capture |
-| Task scheduling | Custom asyncio scheduler — one-shot and recurring tasks with priority queue |
 | JSONL task logs | Every step logged: action, params, timing breakdown, verification result, LLM thought |
 
 ---

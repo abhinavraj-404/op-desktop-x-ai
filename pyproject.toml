@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "desktop-agent"
 version = "1.0.0"
-description = "Autonomous AI desktop agent with accessibility-tree perception, browser automation, vector memory, and self-improving skill library."
+description = "Autonomous AI desktop agent for macOS with accessibility-tree perception, vector memory, and a reusable skill library."
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.11"
