@@ -78,11 +78,6 @@ class OCRConfig(BaseModel):
     languages: list[str] = Field(default_factory=lambda: ["en"])
 
 
-class SchedulingConfig(BaseModel):
-    enabled: bool = False
-    timezone: str = "UTC"
-
-
 class LoggingConfig(BaseModel):
     level: str = "INFO"
     format: Literal["console", "json"] = "console"
@@ -111,9 +106,6 @@ class Settings(BaseSettings):
         default_factory=lambda: AccessibilityConfig(**_DEFAULTS.get("accessibility", {}))
     )
     ocr: OCRConfig = Field(default_factory=lambda: OCRConfig(**_DEFAULTS.get("ocr", {})))
-    scheduling: SchedulingConfig = Field(
-        default_factory=lambda: SchedulingConfig(**_DEFAULTS.get("scheduling", {}))
-    )
     logging: LoggingConfig = Field(
         default_factory=lambda: LoggingConfig(**_DEFAULTS.get("logging", {}))
     )

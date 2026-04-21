@@ -19,7 +19,6 @@ from desktop_agent.core.actions import (
     ExecuteSkillAction,
     ReplanAction,
     SaveDataAction,
-    ScheduleTaskAction,
     parse_action,
 )
 from desktop_agent.core.executor import Executor
@@ -341,10 +340,6 @@ class Agent:
             # Skill execution
             case ExecuteSkillAction():
                 return await self._execute_skill(action.skill_name, action.params)
-
-            # Schedule
-            case ScheduleTaskAction():
-                return f"Scheduling not yet implemented for: {action.task}"
 
             # Done
             case DoneAction():

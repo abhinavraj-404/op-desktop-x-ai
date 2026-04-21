@@ -40,7 +40,6 @@ class ActionType(str, Enum):
     REPLAN = "replan"
     DONE = "done"
     EXECUTE_SKILL = "execute_skill"
-    SCHEDULE_TASK = "schedule_task"
 
 
 # ── Individual action models ─────────────────────────────────────
@@ -168,21 +167,13 @@ class DoneAction(BaseModel):
     thought: str = ""
 
 
-# ── Skill / scheduling actions ───────────────────────────────────
+# ── Skill actions ─────────────────────────────────
 
 
 class ExecuteSkillAction(BaseModel):
     action: Literal[ActionType.EXECUTE_SKILL] = ActionType.EXECUTE_SKILL
     skill_name: str
     params: dict = Field(default_factory=dict)
-    thought: str = ""
-
-
-class ScheduleTaskAction(BaseModel):
-    action: Literal[ActionType.SCHEDULE_TASK] = ActionType.SCHEDULE_TASK
-    task: str
-    cron: str = ""  # cron expression
-    delay_seconds: int = 0
     thought: str = ""
 
 
@@ -209,7 +200,6 @@ AgentAction = Annotated[
         ReplanAction,
         DoneAction,
         ExecuteSkillAction,
-        ScheduleTaskAction,
     ],
     Field(discriminator="action"),
 ]

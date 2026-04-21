@@ -47,9 +47,6 @@ dependencies = [
 
     # Logging
     "structlog>=24.1.0",
-
-    # Scheduling
-    "apscheduler>=3.10.0",
 ]
 
 [project.optional-dependencies]

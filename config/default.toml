@@ -45,10 +45,6 @@ enabled = false                  # disabled — accessibility tree is better; re
 engine = "easyocr"               # easyocr | tesseract
 languages = ["en"]
 
-[scheduling]
-enabled = false
-timezone = "UTC"
-
 [logging]
 level = "INFO"
 format = "console"               # console | json
